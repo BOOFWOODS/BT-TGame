@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World Trivia — Busan Together</title>
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --orange:  #E8641A;
+    --teal:    #29B5C3;
+    --blue:    #1A6BBF;
+    --red:     #D94040;
+    --peach:   #F0A060;
+    --ocean1:  #1A6BBF;
+    --ocean2:  #29B5C3;
+    --white:   #FFFFFF;
+    --offwhite:#F7F5F2;
+    --muted:   #7A8FA8;
+    --card:    #EEF6FA;
+    --dark:    #1A3A50;
+  }
+
+  body {
+    background: var(--white);
+    color: var(--dark);
+    font-family: 'Segoe UI', Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* wave background decoration */
+  body::after {
+    content: '';
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: 140px;
+    background: linear-gradient(180deg, transparent, rgba(41,181,195,0.12));
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .screen { display: none; width: 100vw; min-height: 100vh; flex-direction: column; align-items: center; justify-content: center; padding: 40px; position: relative; z-index: 1; }
+  .screen.active { display: flex; }
+
+  /* ── TITLE SCREEN ── */
+  #title-screen { gap: 20px; text-align: center; background: linear-gradient(160deg, #FFF8F2 0%, #EEF8FA 100%); }
+
+  .logo-wrap { display: flex; align-items: center; justify-content: center; gap: 18px; margin-bottom: 8px; }
+  .logo-people { font-size: 48px; }
+  .org-name { font-size: 22px; font-weight: 900; color: var(--orange); letter-spacing: 1px; }
+  .org-name span { color: var(--teal); }
+
+  .title-eyebrow { font-family: 'Courier New', monospace; font-size: 12px; letter-spacing: 4px; color: var(--teal); text-transform: uppercase; }
+  .title-main { font-size: clamp(60px, 9vw, 108px); font-weight: 900; line-height: 0.9; color: var(--dark); letter-spacing: -2px; }
+  .title-main span { color: var(--orange); }
+  .title-sub { color: var(--muted); font-size: 17px; max-width: 480px; line-height: 1.7; font-weight: 600; }
+
+  /* wave divider */
+  .wave-divider { width: 200px; height: 14px; background: linear-gradient(90deg, var(--blue), var(--teal)); border-radius: 8px; opacity: 0.5; }
+
+  .btn-start {
+    margin-top: 8px;
+    background: var(--orange); color: #fff;
+    border: none; padding: 18px 56px;
+    font-family: 'Segoe UI', Arial, sans-serif; font-size: 20px; font-weight: 900; letter-spacing: 1px;
+    cursor: pointer; border-radius: 50px;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 6px 24px rgba(232,100,26,0.35);
+  }
+  .btn-start:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(232,100,26,0.45); }
+
+  /* ── QUESTION SCREEN ── */
+  #question-screen { gap: 0; justify-content: flex-start; padding: 28px 60px; background: var(--offwhite); }
+
+  /* top bar */
+  .q-header { width: 100%; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .q-branding { display: flex; align-items: center; gap: 10px; }
+  .q-branding .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .q-branding .dot-o { background: var(--orange); }
+  .q-branding .dot-t { background: var(--teal); }
+  .q-branding .dot-b { background: var(--blue); }
+  .q-brand-name { font-weight: 900; font-size: 15px; color: var(--orange); }
+  .q-brand-name span { color: var(--teal); }
+  .q-counter { font-family: 'Courier New', monospace; font-size: 13px; color: var(--muted); letter-spacing: 2px; }
+  .q-flag { font-size: 38px; }
+
+  .progress-bar { width: 100%; height: 6px; background: #DDE8F0; border-radius: 3px; margin-bottom: 28px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--orange), var(--teal)); border-radius: 3px; transition: width 0.5s ease; }
+
+  .q-category { font-family: 'Courier New', monospace; font-size: 11px; letter-spacing: 3px; color: var(--teal); text-transform: uppercase; margin-bottom: 10px; font-weight: 700; }
+  .q-text { font-size: clamp(30px, 4.5vw, 56px); font-weight: 900; line-height: 1.05; color: var(--dark); margin-bottom: 36px; max-width: 900px; letter-spacing: -0.5px; }
+
+  .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; max-width: 960px; }
+  .option-btn {
+    background: var(--white); border: 2.5px solid #D8E8F2;
+    color: var(--dark); padding: 18px 24px;
+    border-radius: 14px; cursor: pointer;
+    display: flex; align-items: center; gap: 16px;
+    font-size: 17px; font-weight: 700; text-align: left;
+    transition: all 0.2s; line-height: 1.3;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  .option-btn:hover:not(:disabled) { border-color: var(--orange); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(232,100,26,0.15); }
+  .option-letter { font-size: 22px; font-weight: 900; color: var(--orange); min-width: 28px; }
+  .option-btn.correct { background: #E8F8EE; border-color: #2EC46E; color: var(--dark); box-shadow: 0 4px 16px rgba(46,196,110,0.2); }
+  .option-btn.correct .option-letter { color: #2EC46E; }
+  .option-btn.wrong   { background: #FEF0EE; border-color: var(--red); }
+  .option-btn.wrong .option-letter { color: var(--red); }
+  .option-btn.reveal  { opacity: 0.4; }
+  .option-btn:disabled { cursor: default; }
+
+  .q-controls { margin-top: 24px; display: flex; gap: 14px; align-items: center; }
+  .btn-reveal, .btn-next {
+    border: none; padding: 14px 36px;
+    font-family: 'Segoe UI', Arial, sans-serif; font-size: 18px; font-weight: 900; letter-spacing: 0.5px;
+    cursor: pointer; border-radius: 50px; transition: all 0.15s;
+  }
+  .btn-reveal { background: var(--teal); color: #fff; box-shadow: 0 4px 16px rgba(41,181,195,0.3); }
+  .btn-reveal:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .btn-next   { background: var(--orange); color: #fff; box-shadow: 0 4px 16px rgba(232,100,26,0.3); }
+  .btn-next:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .btn-next:disabled { opacity: 0.25; cursor: default; filter: none; transform: none; box-shadow: none; }
+
+  .fun-fact { margin-top: 18px; background: rgba(41,181,195,0.08); border-left: 4px solid var(--teal); padding: 14px 20px; border-radius: 0 10px 10px 0; font-size: 15px; color: var(--dark); max-width: 960px; display: none; line-height: 1.7; font-weight: 600; }
+  .fun-fact.visible { display: block; }
+  .fun-fact strong { color: var(--teal); }
+
+  /* ── END SCREEN ── */
+  #end-screen { gap: 20px; text-align: center; background: linear-gradient(160deg, #FFF8F2 0%, #EEF8FA 100%); }
+  .end-people { font-size: 72px; animation: bounce 1.2s ease infinite alternate; }
+  @keyframes bounce { to { transform: translateY(-14px); } }
+  .end-title { font-size: clamp(44px, 7vw, 88px); font-weight: 900; color: var(--orange); letter-spacing: -2px; line-height: 1; }
+  .end-title span { color: var(--teal); }
+  .end-subtitle { color: var(--muted); font-size: 17px; max-width: 480px; line-height: 1.7; font-weight: 600; }
+  .btn-restart { background: var(--orange); color: #fff; border: none; padding: 16px 52px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 20px; font-weight: 900; cursor: pointer; border-radius: 50px; margin-top: 8px; transition: all 0.15s; box-shadow: 0 6px 24px rgba(232,100,26,0.35); }
+  .btn-restart:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(232,100,26,0.45); }
+</style>
+</head>
+<body>
+
+<!-- TITLE SCREEN -->
+<div id="title-screen" class="screen active">
+  <div class="logo-wrap">
+    <div class="logo-people">🌉</div>
+    <div class="org-name">BUSAN <span>TOGETHER</span></div>
+  </div>
+  <div class="title-eyebrow">International Event · World Trivia</div>
+  <div class="title-main">WORLD<br><span>TRIVIA</span></div>
+  <div class="wave-divider"></div>
+  <div class="title-sub">30 questions across 6 continents. How well do you know our world?</div>
+  <button class="btn-start" onclick="startGame()">🌍 Start Game</button>
+</div>
+
+<!-- QUESTION SCREEN -->
+<div id="question-screen" class="screen">
+  <div class="q-header">
+    <div class="q-branding">
+      <div class="dot dot-o"></div><div class="dot dot-t"></div><div class="dot dot-b"></div>
+      <span class="q-brand-name">BUSAN <span>TOGETHER</span></span>
+    </div>
+    <div class="q-counter" id="q-counter">QUESTION 1 / 30</div>
+    <div class="q-flag" id="q-flag">🌐</div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+  <div class="q-category" id="q-category">Category</div>
+  <div class="q-text" id="q-text">Question goes here?</div>
+  <div class="options-grid" id="options-grid"></div>
+  <div class="fun-fact" id="fun-fact"></div>
+  <div class="q-controls">
+    <button class="btn-reveal" id="btn-reveal" onclick="revealAnswer()">Reveal Answer</button>
+    <button class="btn-next"   id="btn-next"   onclick="nextQuestion()" disabled>Next →</button>
+  </div>
+</div>
+
+<!-- END SCREEN -->
+<div id="end-screen" class="screen">
+  <div class="end-people">🌏🤝🌍</div>
+  <div class="end-title">WELL PLAYED,<br><span>WORLD!</span></div>
+  <div class="wave-divider"></div>
+  <div class="end-subtitle">Thanks for playing with Busan Together! Don't forget to collect your participation gift 🎁</div>
+  <button class="btn-restart" onclick="restartGame()">🔄 Play Again</button>
+</div>
+
+<script>
+const QUESTIONS = [
+  // ── FOOD & DRINK ──
+  { flag:"🇰🇷", country:"South Korea", category:"Food & Drink", q:"What is the name of Korea's famous fermented vegetable dish, a UNESCO Intangible Heritage?", options:["Doenjang","Gochujang","Kimchi","Ganjang"], answer:2, fact:"Kimchi has been made in Korea for over 2,000 years. There are over 200 varieties, and the average Korean eats about 18 kg per year." },
+  { flag:"🇰🇷", country:"South Korea", category:"Food & Drink", q:"What is 삼겹살 (samgyeopsal)?", options:["Spicy beef soup","Steamed rice dumplings","Fish cake skewers","Grilled pork belly"], answer:3, fact:"Samgyeopsal (three-layer meat) is one of Korea's most popular dishes, grilled at the table and eaten wrapped in lettuce leaves." },
+  { flag:"🇰🇷", country:"South Korea", category:"Food & Drink", q:"Which popular Korean street food is made of chewy rice cakes in a spicy red sauce?", options:["Hotteok","Pajeon","Tteokbokki","Bingsu"], answer:2, fact:"Tteokbokki originated as a royal court dish in the Joseon era. The modern spicy street food version became popular in the 1950s." },
+  { flag:"🇰🇷", country:"South Korea", category:"Food & Drink", q:"What is 막걸리 (makgeolli)?", options:["Barley tea","Distilled soju","Fermented rice wine","Sweet sikhye punch"], answer:2, fact:"Makgeolli is Korea's oldest alcoholic drink, cloudy and slightly fizzy. It was traditionally the drink of farmers and laborers." },
+  { flag:"🇰🇷", country:"South Korea", category:"Food & Drink", q:"Busan's Jagalchi Market is Korea's largest market for what?", options:["Dried goods and spices","Seafood","Street snacks","Hanbok fabric"], answer:1, fact:"Jagalchi Market is Korea's largest seafood market. Eating fresh hoe (raw fish) sliced right at the market is a classic Busan experience." },
+  { flag:"🇰🇷", country:"South Korea", category:"Food & Drink", q:"What cold Korean dessert is made from shaved ice topped with sweet red beans and fruit?", options:["Hotteok","Yakgwa","Bingsu","Tteok"], answer:2, fact:"Bingsu (빙수) dates back to the Joseon Dynasty. Modern versions come loaded with toppings like mango, matcha, strawberry, and condensed milk." },
+
+  // ── HISTORY ──
+  { flag:"🇰🇷", country:"South Korea", category:"History", q:"King Sejong the Great created Hangul in 1443. What was his main reason?", options:["To replace Hanja in government","To create a royal secret code","To make literacy accessible to all people","To unify the Three Kingdoms"], answer:2, fact:"Before Hangul, only the educated elite could read Classical Chinese. King Sejong wanted every person to be able to read and write." },
+  { flag:"🇰🇷", country:"South Korea", category:"History", q:"How long did the Joseon Dynasty rule Korea?", options:["About 200 years","About 300 years","About 400 years","About 500 years"], answer:3, fact:"The Joseon Dynasty lasted from 1392 to 1897 — over 500 years — making it one of the longest-ruling Confucian dynasties in history." },
+  { flag:"🇰🇷", country:"South Korea", category:"History", q:"Which ancient Korean kingdom built the famous Bulguksa Temple in Gyeongju?", options:["Goguryeo","Goryeo","Baekje","Silla"], answer:3, fact:"Bulguksa was built during the Silla Kingdom in 751 AD. Gyeongju, the Silla capital, is often called 'the museum without walls.'" },
+  { flag:"🇰🇷", country:"South Korea", category:"History", q:"In which year was the Korean War armistice signed?", options:["1950","1951","1953","1960"], answer:2, fact:"The armistice was signed on July 27, 1953. Technically, North and South Korea remain in a state of war as no peace treaty has been signed." },
+  { flag:"🇰🇷", country:"South Korea", category:"History", q:"What does the central taeguk circle on the Korean flag represent?", options:["The Korean peninsula and seas","The four seasons of Korea","Balance of opposing cosmic forces","The unity of the Korean people"], answer:2, fact:"The red and blue taeguk represents the balance of positive and negative cosmic forces. The four trigrams represent heaven, earth, water, and fire." },
+
+  // ── K-POP & ENTERTAINMENT ──
+  { flag:"🇰🇷", country:"South Korea", category:"K-Pop & Entertainment", q:"Which BTS song was the first K-pop song ever to hit #1 on the Billboard Hot 100?", options:["Butter","DNA","Idol","Dynamite"], answer:3, fact:"'Dynamite' (2020) was BTS's first entirely English-language single and their first Billboard Hot 100 number one." },
+  { flag:"🇰🇷", country:"South Korea", category:"K-Pop & Entertainment", q:"Korean film 'Parasite' made history at the Oscars. What award did it win?", options:["Best Foreign Film only","Best Director only","Best Picture","Best Original Screenplay only"], answer:2, fact:"Parasite won Best Picture at the 2020 Oscars, becoming the first non-English language film ever to win. It won 4 Oscars total." },
+  { flag:"🇰🇷", country:"South Korea", category:"K-Pop & Entertainment", q:"What is 'Hallyu' (한류)?", options:["A Korean traditional music style","The Korean Wave of global cultural influence","A Joseon-era dance form","Korea's national broadcasting network"], answer:1, fact:"Hallyu (한류), or the 'Korean Wave,' began in the late 1990s with K-dramas spreading across Asia and is now a global phenomenon." },
+  { flag:"🇰🇷", country:"South Korea", category:"K-Pop & Entertainment", q:"Which Korean Netflix show about a deadly children's game became a worldwide sensation in 2021?", options:["Kingdom","Hellbound","All of Us Are Dead","Squid Game"], answer:3, fact:"Squid Game became Netflix's most-watched series ever at the time of its release, viewed in over 90 countries within its first month." },
+  { flag:"🇰🇷", country:"South Korea", category:"K-Pop & Entertainment", q:"PSY's 'Gangnam Style' was the first YouTube video to reach 1 billion views. What is Gangnam?", options:["A beach district in Busan","A mountain region in Gangwon","Seoul's wealthiest and trendiest district","An old royal palace district"], answer:2, fact:"Gangnam is Seoul's wealthiest district, known for luxury brands and high-end lifestyle. PSY's song humorously satirizes its culture." },
+
+  // ── BUSAN ──
+  { flag:"🇰🇷", country:"Busan", category:"Busan", q:"What makes Busan unique compared to most other major Korean cities?", options:["It has the most palaces","It is Korea's highest altitude city","It is a coastal city famous for beaches and the sea","It is the oldest continuously inhabited city"], answer:2, fact:"Busan has 7 beaches including Haeundae, one of Korea's most visited. The city sits where the Nakdong River meets the Korea Strait." },
+  { flag:"🇰🇷", country:"Busan", category:"Busan", q:"What major international event does Busan host every October?", options:["The Korea Grand Prix","Busan International Film Festival","Korea Open Tennis Championship","Busan World Music Festival"], answer:1, fact:"BIFF (부산국제영화제), founded in 1996, is Asia's largest and most prestigious film festival, drawing filmmakers from over 70 countries." },
+  { flag:"🇰🇷", country:"Busan", category:"Busan", q:"What is Gamcheon Culture Village known as?", options:["The Venice of Busan","The Machu Picchu of Busan","The Rainbow Hill of Korea","The Hidden Palace Village"], answer:1, fact:"Gamcheon Culture Village is nicknamed the 'Machu Picchu of Busan.' Built by Korean War refugees, it was transformed into a vibrant art village." },
+  { flag:"🇰🇷", country:"Busan", category:"Busan", q:"What is Gwangan Bridge (광안대교) famous for?", options:["Being Korea's oldest bridge","Its nightly LED light show","Having the highest bungee jump in Asia","Connecting Busan to Geoje Island"], answer:1, fact:"Gwangan Bridge is 7.4 km long and puts on nightly LED light shows over the sea. It is one of Busan's most iconic landmarks." },
+  { flag:"🇰🇷", country:"Busan", category:"Busan", q:"What is special about Haedong Yonggungsa Temple in Busan?", options:["It is Korea's largest Buddhist temple","It was built by King Sejong","It sits on wooden stilts directly over the sea","It is carved into a mountain cave"], answer:2, fact:"Haedong Yonggungsa (해동 용궁사), built in 1376, is one of Korea's few seaside Buddhist temples. It is believed one wish made there will come true." },
+
+  // ── LANGUAGE & TRADITIONS ──
+  { flag:"🇰🇷", country:"South Korea", category:"Language & Traditions", q:"What is 설날 (Seollal)?", options:["Korea's National Foundation Day","The Harvest Moon Festival","Lunar New Year","Buddha's Birthday"], answer:2, fact:"Seollal is one of Korea's biggest holidays. Families perform ancestral rites, wear hanbok, eat tteokguk (rice cake soup), and bow to elders for blessings." },
+  { flag:"🇰🇷", country:"South Korea", category:"Language & Traditions", q:"What is the traditional Korean clothing called?", options:["Dobok","Jeogori only","Hanbok","Baji"], answer:2, fact:"Hanbok (한복) dates back over 1,600 years. It is worn during holidays and ceremonies and is recognized for its vibrant colors and elegant lines." },
+  { flag:"🇰🇷", country:"South Korea", category:"Language & Traditions", q:"In traditional Korean age counting, how old is a newborn baby?", options:["0 — same as international counting","1 year old","2 years old","It depends on the birth month"], answer:1, fact:"In the traditional Korean age system (세는 나이), everyone is born as 1. South Korea officially adopted international age counting in 2023." },
+  { flag:"🇰🇷", country:"South Korea", category:"Language & Traditions", q:"What is 눈치 (nunchi)?", options:["A Korean martial arts move","The art of reading a room and sensing others' feelings","A formal greeting bow","A type of ancestral ceremony"], answer:1, fact:"Nunchi is the subtle Korean art of gauging the atmosphere and others' moods. Someone with 'good nunchi' is socially intelligent and considerate." },
+  { flag:"🇰🇷", country:"South Korea", category:"Language & Traditions", q:"How many basic characters does Hangul have?", options:["24 (14 consonants + 10 vowels)","30 (20 consonants + 10 vowels)","18 (10 consonants + 8 vowels)","28 (14 consonants + 14 vowels)"], answer:0, fact:"Hangul has 14 basic consonants and 10 basic vowels. Characters are grouped into syllable blocks, making it one of the most logical writing systems ever created." },
+];
+
+let currentQ = 0;
+let revealed = false;
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startGame() {
+  currentQ = 0;
+  show('question-screen');
+  loadQuestion();
+}
+
+function loadQuestion() {
+  revealed = false;
+  const q = QUESTIONS[currentQ];
+  document.getElementById('q-counter').textContent = `QUESTION ${currentQ + 1} / ${QUESTIONS.length}`;
+  document.getElementById('q-flag').textContent = q.flag;
+  document.getElementById('q-category').textContent = `${q.flag}  ${q.country} · ${q.category}`;
+  document.getElementById('q-text').textContent = q.q;
+  document.getElementById('progress-fill').style.width = `${((currentQ) / QUESTIONS.length) * 100}%`;
+
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+  const letters = ['A','B','C','D'];
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="option-letter">${letters[i]}</span>${opt}`;
+    btn.dataset.index = i;
+    btn.onclick = () => selectOption(i);
+    grid.appendChild(btn);
+  });
+
+  document.getElementById('fun-fact').classList.remove('visible');
+  document.getElementById('fun-fact').innerHTML = '';
+  document.getElementById('btn-reveal').disabled = false;
+  document.getElementById('btn-reveal').style.opacity = '1';
+  document.getElementById('btn-next').disabled = true;
+}
+
+function selectOption(idx) {
+  if (revealed) return;
+  const q = QUESTIONS[currentQ];
+  const buttons = document.querySelectorAll('.option-btn');
+  buttons.forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === q.answer) btn.classList.add('correct');
+    else if (i === idx && i !== q.answer) btn.classList.add('wrong');
+    else btn.classList.add('reveal');
+  });
+  showFact();
+  revealed = true;
+  document.getElementById('btn-next').disabled = false;
+}
+
+function revealAnswer() {
+  if (revealed) return;
+  revealed = true;
+  const q = QUESTIONS[currentQ];
+  const buttons = document.querySelectorAll('.option-btn');
+  buttons.forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === q.answer) btn.classList.add('correct');
+    else btn.classList.add('reveal');
+  });
+  showFact();
+  document.getElementById('btn-reveal').disabled = true;
+  document.getElementById('btn-reveal').style.opacity = '0.4';
+  document.getElementById('btn-next').disabled = false;
+}
+
+function showFact() {
+  const q = QUESTIONS[currentQ];
+  const fact = document.getElementById('fun-fact');
+  fact.innerHTML = `<strong>💡 Did you know?</strong> ${q.fact}`;
+  fact.classList.add('visible');
+}
+
+function nextQuestion() {
+  currentQ++;
+  if (currentQ >= QUESTIONS.length) {
+    show('end-screen');
+  } else {
+    loadQuestion();
+  }
+}
+
+function restartGame() {
+  startGame();
+}
+</script>
+</body>
+</html>
